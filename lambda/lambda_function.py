@@ -28,7 +28,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speak_output = "Olá, você deseja saber o clima de qual cidade?"
+        speak_output = "Em qual cidade você gostaria de pedalar?"
 
         return (
             handler_input.response_builder
@@ -50,14 +50,39 @@ class GetWeatherIntentHandler(AbstractRequestHandler):
         city = slots['city'].value
         speak_output = ''
         lang = '&lang=pt_br'
-        api_address = "https://api.openweathermap.org/data/2.5/weather?appid={Your_API_Key}&q="
+        api_address = "https://api.openweathermap.org/data/2.5/weather?appid=52128bf6293eea0a463151d60d483d46&q="
         url = api_address + city + lang
         json_data = requests.get(url).json()
-        formatted_json = json_data['weather'][0]['description']
+        id = json_data['weather'][0]['id']
+        description = json_data['weather'][0]['description']
         temp_json = json_data['main']['temp']
         temp = round(temp_json - 273.15)
         humidity = json_data['main']['humidity']
-        speak_output = "O clima de {city} é de {formatted_json} com uma temperatura de {temp}° e humidade de {humidity}%".format(city=city,formatted_json=formatted_json,temp=temp,humidity=humidity)
+        if (id == 800):
+            description = "céu limpo"
+        elif (id >= 200 and id <= 232):
+            description = "trovoada"
+        elif (id >= 300 and id <= 321):
+            description = "chuvisco"
+        elif (id >= 500 and id <= 531):
+            description = "chuva"
+        elif (id >= 600 and id <= 622):
+            description = "neve"    
+        elif (id >= 801 and id <= 804):
+            description = "nuvens"
+        if (temp < 15 and (id >= 800 and id <= 804)):
+            speak_output = "Hmm... O clima está frio em {city} para pedalar, a temperatura é de {temp}° e o tempo está com {description}, a humidade está em {humidity}%.".format(city=city,description=description,temp=temp,humidity=humidity)
+        elif (temp < 15 and (id >= 200 and id <= 622)):
+            speak_output = "O tempo não está nada bom para pedalar em {city}, está frio com uma temperatura de {temp}° e o tempo está com {description}, a humidade está em {humidity}%.".format(city=city,description=description,temp=temp,humidity=humidity)
+        elif (temp < 15):
+            speak_output = "Hmm... O clima está frio em {city} para pedalar, a temperatura é de {temp}° e o tempo está com {description}, a humidade está em {humidity}%.".format(city=city,description=description,temp=temp,humidity=humidity)
+        if (temp > 15 and (id >= 800 and id <= 804)):
+            speak_output = "Está calor em {city} com um clima bom para pedalar, a temperatura é de {temp}° e o tempo está com {description}, a humidade está em {humidity}%.".format(city=city,description=description,temp=temp,humidity=humidity)
+        elif (temp > 15 and (id >= 200 and id <= 622)):
+            speak_output = "Está calor em {city}, porém o tempo não está nada bom para pedalar, a temperatura é de {temp}°, mas o tempo está com {description}, a humidade está em {humidity}%.".format(city=city,description=description,temp=temp,humidity=humidity)
+        elif (temp > 15):
+            speak_output = "Está calor em {city} com um clima bom para pedalar, a temperatura é de {temp}° e o tempo está com {description}, a humidade está em {humidity}%.".format(city=city,description=description,temp=temp,humidity=humidity)
+        
         repromptOutput = " Você quer saber o tempo novamente de outra cidade?"
         
         return (
